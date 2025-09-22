@@ -241,55 +241,8 @@ std::tuple<std::vector<float>, std::vector<int>> Navmesh::get_navmesh_trianglula
 
 std::tuple<std::vector<float>, std::vector<int>> Navmesh::get_navmesh_trianglulation_sample()
 {
-	if (is_build)
-	{
-		std::vector<float> vertices(0);
-		std::vector<int> triangles(0);
-
-		dtNavMesh* navmesh = sample->getNavMesh();
-		int max_tiles = navmesh->getMaxTiles();
-		int start_tile_index = 0;
-		for (size_t i = 0; i < max_tiles; i++)
-		{
-			const dtMeshTile* tile = navmesh->getTile(i);
-			if (!tile->header) continue;
-
-			for (size_t j = 0; j < tile->header->vertCount; j++)
-			{
-				vertices.push_back(tile->verts[3 * j]);
-				vertices.push_back(tile->verts[3 * j + 1]);
-				vertices.push_back(tile->verts[3 * j + 2]);
-			}
-
-			for (int j = 0; j < tile->header->polyCount; ++j)
-			{
-				const dtPoly* p = &tile->polys[j];
-				if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)	// skip off-mesh links.
-					continue;
-
-				const dtPolyDetail* pd = &tile->detailMeshes[j];
-				for (int k = 0; k < pd->triCount; ++k)
-				{
-					const unsigned char* t = &tile->detailTris[(pd->triBase + k) * 4];
-					triangles.push_back(p->verts[t[0]] + start_tile_index);
-					triangles.push_back(p->verts[t[1]] + start_tile_index);
-					triangles.push_back(p->verts[t[2]] + start_tile_index);
-				}
-			}
-			start_tile_index += tile->header->vertCount;
-		}
-
-		std::tuple<std::vector<float>, std::vector<int>> to_return = std::make_tuple(vertices, triangles);
-		return to_return;
-	}
-	else
-	{
-		ctx.log(RC_LOG_ERROR, "Get navmesh trianglulation: navmesh is not builded.");
-		std::vector<float> vertices(0);
-		std::vector<int> triangles(0);
-		std::tuple<std::vector<float>, std::vector<int>> to_return = std::make_tuple(vertices, triangles);
-		return to_return;
-	}
+    // Fallback to poly-mesh-based triangulation to avoid accessing private Detour APIs
+    return get_navmesh_trianglulation();
 }
 
 std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> Navmesh::get_navmesh_polygonization()
@@ -337,52 +290,8 @@ std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> Navmesh::get_
 
 std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> Navmesh::get_navmesh_polygonization_sample()
 {
-	if (is_build)
-	{
-		std::vector<float> vertices(0);
-		std::vector<int> polygons(0);
-		std::vector<int> sizes(0);
-
-		dtNavMesh* navmesh = sample->getNavMesh();
-		int max_tiles = navmesh->getMaxTiles();
-		for (size_t i = 0; i < max_tiles; i++)
-		{
-			const dtMeshTile* tile = navmesh->getTile(i);
-			if (!tile->header) continue;
-
-			for (size_t j = 0; j < tile->header->vertCount; j++)
-			{
-				vertices.push_back(tile->verts[3 * j]);
-				vertices.push_back(tile->verts[3 * j + 1]);
-				vertices.push_back(tile->verts[3 * j + 2]);
-			}
-
-			for (int j = 0; j < tile->header->polyCount; ++j)
-			{
-				const dtPoly* p = &tile->polys[j];
-				if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)	// skip off-mesh links.
-					continue;
-
-				for (int k = 0; k < p->vertCount; k++)
-				{
-					polygons.push_back(p->verts[k]);
-				}
-				sizes.push_back(p->vertCount);
-			}
-		}
-
-		std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> to_return = std::make_tuple(vertices, polygons, sizes);
-		return to_return;
-	}
-	else
-	{
-		ctx.log(RC_LOG_ERROR, "Get navmesh polygonization: navmesh is not builded.");
-		std::vector<float> vertices(0);
-		std::vector<int> polygons(0);
-		std::vector<int> sizes(0);
-		std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> to_return = std::make_tuple(vertices, polygons, sizes);
-		return to_return;
-	}
+    // Fallback to poly-mesh-based polygonization to avoid accessing private Detour APIs
+    return get_navmesh_polygonization();
 }
 
 void Navmesh::init_by_raw(std::vector<float> vertices, std::vector<int> faces)
@@ -616,6 +525,8 @@ std::vector<float> Navmesh::hit_mesh(std::vector<float> start, std::vector<float
 	{
 		ctx.log(RC_LOG_ERROR, "Hit mesh: invalid input vectors.");
 	}
+    // Return empty vector if no result
+    return std::vector<float>();
 }
 
 #ifdef _MAIN_APP

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include <stdarg.h>
 #include "SampleInterfaces.h"
 #include "Recast.h"

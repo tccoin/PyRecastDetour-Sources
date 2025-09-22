@@ -6,27 +6,7 @@
 
 namespace py = pybind11;
 
-#ifdef _Python2
-PYBIND11_MODULE(Py2RecastDetour, m)
-#else
-#ifdef _Python36
-PYBIND11_MODULE(Py36RecastDetour, m)
-#else
-#ifdef _Python37
-PYBIND11_MODULE(Py37RecastDetour, m)
-#else
-#ifdef _Python38
-PYBIND11_MODULE(Py38RecastDetour, m)
-#else
-#ifdef _Python39
-PYBIND11_MODULE(Py39RecastDetour, m)
-#else
-PYBIND11_MODULE(Py310RecastDetour, m)
-#endif
-#endif
-#endif
-#endif
-#endif
+PYBIND11_MODULE(PyRecastDetour, m)
 {
 	m.doc() = "Class allows to build navmesh from obj or raw vertices and polygons data. Also allows to find the shortest path between two points. Based on RecastNavigation c++ library https://github.com/recastnavigation/recastnavigation";
 	py::class_<Navmesh>(m, "Navmesh")
@@ -46,8 +26,8 @@ PYBIND11_MODULE(Py310RecastDetour, m)
 		.def("get_bounding_box", &Navmesh::get_bounding_box)
 		.def("save_navmesh", &Navmesh::save_navmesh, py::arg("file_path"))
 		.def("load_navmesh", &Navmesh::load_navmesh, py::arg("file_path"))
-		.def("get_navmesh_trianglulation", &Navmesh::get_navmesh_trianglulation_sample)
-		.def("get_navmesh_polygonization", &Navmesh::get_navmesh_polygonization_sample)
+		.def("get_navmesh_trianglulation", &Navmesh::get_navmesh_trianglulation)
+		.def("get_navmesh_polygonization", &Navmesh::get_navmesh_polygonization)
 		.def("hit_mesh", &Navmesh::hit_mesh, py::arg("start"), py::arg("end"));
 }
 #endif // !_MAIN_APP
