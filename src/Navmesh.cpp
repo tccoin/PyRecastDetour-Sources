@@ -186,14 +186,21 @@ void Navmesh::save_navmesh(std::string file_path)
 
 void Navmesh::load_navmesh(std::string file_path)
 {
-	if (is_init)
+	// Ensure we have a sample and tool even without geometry.
+	if (!is_init)
 	{
-		sample->load_from_file(file_path.c_str());
+		sample = new Sample_SoloMesh();
+		sample->setContext(&ctx);
+		sample->resetCommonSettings();
+		tool = new NavMeshTesterTool();
+		sample->setTool(tool);
+		is_init = true;
 	}
-	else
-	{
-		ctx.log(RC_LOG_ERROR, "Load navmesh: geometry is not initialized.");
-	}
+
+	sample->load_from_file(file_path.c_str());
+
+	// Consider basic validation (e.g., sample->getNavMesh() != nullptr).
+	is_build = true;
 }
 
 std::tuple<std::vector<float>, std::vector<int>> Navmesh::get_navmesh_trianglulation()
