@@ -3,7 +3,7 @@
 ARG PY_VER=3.10
 ARG TARGETPLATFORM=linux/amd64
 
-FROM python:${PY_VER}-slim AS builder
+FROM python:${PY_VER}-slim-bullseye AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PY_VER
@@ -82,7 +82,7 @@ RUN set -eux; \
     -o /work/dist/${MODNAME}${EXT_SUFFIX}
 
 # Runtime image: include Python to run tests/examples; copy built artifact only
-FROM python:${PY_VER}-slim AS runtime
+FROM python:${PY_VER}-slim-bullseye AS runtime
 ARG PY_VER
 WORKDIR /app
 COPY --from=builder /work/dist /app/dist
