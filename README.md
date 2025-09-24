@@ -36,19 +36,18 @@ Copy the built `.so` out of the container and install it locally (adjust contain
 cid=$(docker create pyrecastdetour:py310-amd64)
 docker cp "$cid:/app/dist/." ./dist
 docker rm "$cid"
-
 # Install system-wide (or place on your PYTHONPATH)
 sudo mkdir -p /usr/local/lib/python3.10/site-packages
-sudo cp dist/Py310RecastDetour*.so /usr/local/lib/python3.10/site-packages/
+sudo cp dist/PyRecastDetour*.so /usr/local/lib/python3.10/site-packages/
 
 # Test import on host
-python3.10 -c "import Py310RecastDetour as m; print(m, 'OK')"
+python3 -c "import PyRecastDetour as m; print(m, 'OK')"
 ```
 
 ## Example usage (Python 3.10)
 
 ```python
-import Py310RecastDetour as navmod
+import PyRecastDetour as navmod
 
 nm = navmod.Navmesh()
 vertices = [
@@ -65,4 +64,4 @@ print(nm.get_bounding_box())
 print(nm.pathfind_straight([0.1,0.0,0.1],[0.9,0.0,0.9]))
 ```
 
-If you need a different Python minor version (e.g., 3.8), adjust `PY_VER` during `docker build`. The module name is selected at compile time to match the Python version (`Py36RecastDetour`, `Py37RecastDetour`, `Py38RecastDetour`, `Py39RecastDetour`, `Py310RecastDetour`).
+If you need a different Python minor version (e.g., 3.8), adjust `PY_VER` during `docker build`. The module name is selected at compile time to match the Python version (`Py36RecastDetour`, `Py37RecastDetour`, `Py38RecastDetour`, `Py39RecastDetour`, `PyRecastDetour`).

@@ -46,6 +46,7 @@ RUN set -eux; \
     mkdir -p /work/build /work/dist; \
     cc -O3 -fPIC -c /work/src/Contrib/fastlz/fastlz.c -o /work/build/fastlz.o; \
     g++ -O3 -std=c++14 -fPIC -shared -Wl,--no-as-needed \
+    -static-libstdc++ -static-libgcc \
     $CPP_DEFS \
     $PYBIND_INCLUDES \
     -I/work/src \
