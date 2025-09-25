@@ -29,5 +29,8 @@ PYBIND11_MODULE(PyRecastDetour, m)
 		.def("get_navmesh_trianglulation", &Navmesh::get_navmesh_trianglulation)
 		.def("get_navmesh_polygonization", &Navmesh::get_navmesh_polygonization)
 		.def("hit_mesh", &Navmesh::hit_mesh, py::arg("start"), py::arg("end"));
+
+	// Module-level version function
+	m.def("version", []() { return "v0.1.0"; });
 }
 #endif // !_MAIN_APP

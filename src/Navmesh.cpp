@@ -186,20 +186,13 @@ void Navmesh::save_navmesh(std::string file_path)
 
 void Navmesh::load_navmesh(std::string file_path)
 {
-	// Ensure we have a sample and tool even without geometry.
-	if (!is_init)
-	{
-		sample = new Sample_SoloMesh();
-		sample->setContext(&ctx);
-		sample->resetCommonSettings();
-		tool = new NavMeshTesterTool();
-		sample->setTool(tool);
-		is_init = true;
-	}
-
+	sample = new Sample_SoloMesh();
+	sample->setContext(&ctx);
 	sample->load_from_file(file_path.c_str());
-
-	// Consider basic validation (e.g., sample->getNavMesh() != nullptr).
+	sample->resetCommonSettings();
+	tool = new NavMeshTesterTool();
+	sample->setTool(tool);
+	is_init = true;
 	is_build = true;
 }
 
@@ -260,25 +253,74 @@ std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> Navmesh::get_
 		std::vector<int> polygons(0);
 		std::vector<int> sizes(0);
 
+		// Prefer rcPolyMesh when available (provides consistent indexing and cs/ch scaling)
 		rcPolyMesh* pmesh = sample->get_m_pmesh();
-		for (int v_index = 0; v_index < pmesh->nverts; v_index++) {
-			vertices.push_back(pmesh->bmin[0] + pmesh->cs * pmesh->verts[3 * v_index]);
-			vertices.push_back(pmesh->bmin[1] + pmesh->ch * pmesh->verts[3 * v_index + 1]);
-			vertices.push_back(pmesh->bmin[2] + pmesh->cs * pmesh->verts[3 * v_index + 2]);
-		}
-
-		for (int p_index = 0; p_index < pmesh->npolys; p_index++) {
-			int pv = p_index * 2 * pmesh->nvp;
-			unsigned short p_size = 0;
-			for (int j = 0; j < pmesh->nvp; j++) {
-				unsigned short v = pmesh->polys[pv + j];
-				if (v == 0xffff) {
-					break;
-				}
-				polygons.push_back(v);
-				p_size++;
+		if (pmesh)
+		{
+			for (int v_index = 0; v_index < pmesh->nverts; v_index++) {
+				vertices.push_back(pmesh->bmin[0] + pmesh->cs * pmesh->verts[3 * v_index]);
+				vertices.push_back(pmesh->bmin[1] + pmesh->ch * pmesh->verts[3 * v_index + 1]);
+				vertices.push_back(pmesh->bmin[2] + pmesh->cs * pmesh->verts[3 * v_index + 2]);
 			}
-			sizes.push_back(p_size);
+
+			for (int p_index = 0; p_index < pmesh->npolys; p_index++) {
+				int pv = p_index * 2 * pmesh->nvp;
+				unsigned short p_size = 0;
+				for (int j = 0; j < pmesh->nvp; j++) {
+					unsigned short v = pmesh->polys[pv + j];
+					if (v == 0xffff) {
+						break;
+					}
+					polygons.push_back(v);
+					p_size++;
+				}
+				sizes.push_back(p_size);
+			}
+		}
+		else
+		{
+			// Fallback: derive polygonization directly from Detour dtNavMesh
+			const dtNavMesh* nav = sample->getNavMesh();
+			if (!nav)
+			{
+				std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> empty = std::make_tuple(vertices, polygons, sizes);
+				return empty;
+			}
+
+			for (int i = 0; i < nav->getMaxTiles(); ++i)
+			{
+				const dtMeshTile* tile = nav->getTile(i);
+				if (!tile || !tile->header) continue;
+
+				// Record base index before appending this tile's vertices
+				const int vertBase = static_cast<int>(vertices.size() / 3);
+
+				// Append tile vertices (world space)
+				const int vcount = tile->header->vertCount;
+				for (int v = 0; v < vcount; ++v)
+				{
+					const float* vptr = &tile->verts[v * 3];
+					vertices.push_back(vptr[0]);
+					vertices.push_back(vptr[1]);
+					vertices.push_back(vptr[2]);
+				}
+
+				// Append polygons with sizes, remapping local vert indices by vertBase
+				const int pcount = tile->header->polyCount;
+				for (int p = 0; p < pcount; ++p)
+				{
+					const dtPoly* poly = &tile->polys[p];
+					// Skip off-mesh connection polys
+					if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION) continue;
+					const int polySize = poly->vertCount; // actual vertex count for this polygon
+					for (int j = 0; j < polySize; ++j)
+					{
+						const int localIndex = poly->verts[j];
+						polygons.push_back(vertBase + localIndex);
+					}
+					sizes.push_back(polySize);
+				}
+			}
 		}
 
 		std::tuple<std::vector<float>, std::vector<int>, std::vector<int>> to_return = std::make_tuple(vertices, polygons, sizes);
