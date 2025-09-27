@@ -41,6 +41,22 @@
 #endif
 
 
+// Map Detour builder logs into Recast BuildContext logs.
+static void dtBuilderLogToRcContext(void* user, int category, const char* message)
+{
+	BuildContext* ctx = (BuildContext*)user;
+	if (!ctx || !message) return;
+	rcLogCategory mapped = RC_LOG_PROGRESS;
+	if (category == dtNavMeshCreateParams::DT_BUILD_LOG_ERROR)
+		mapped = RC_LOG_ERROR;
+	else if (category == dtNavMeshCreateParams::DT_BUILD_LOG_WARNING)
+		mapped = RC_LOG_WARNING;
+	else
+		mapped = RC_LOG_PROGRESS;
+	ctx->log(mapped, "%s", message);
+}
+
+
 Sample_SoloMesh::Sample_SoloMesh() :
 	m_keepInterResults(true),
 	m_totalBuildTimeMs(0),
@@ -503,9 +519,13 @@ bool Sample_SoloMesh::handleBuild()
 		params.ch = m_cfg.ch;
 		params.buildBvTree = true;
 
+		// Forward Detour builder messages to our build context.
+		params.log = &dtBuilderLogToRcContext;
+		params.logUserData = m_ctx;
+
 		if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
 		{
-			m_ctx->log(RC_LOG_ERROR, "Could not build Detour navmesh.");
+			m_ctx->log(RC_LOG_ERROR, "Could not build Detour navmesh. See earlier errors for details.");
 			return false;
 		}
 
