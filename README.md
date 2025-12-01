@@ -5,24 +5,24 @@ Source files of the [PyRecastDetour](https://github.com/Tugcga/PyRecastDetour) m
 This repository includes a Dockerfile to build the extension for a specific Python version and platform.
 
 - Build args:
-  - `PY_VER` (default `3.10`)
+  - `PY_VER` (default `3.11`)
   - `TARGETPLATFORM` (default `linux/amd64`)
 
 ### Build
 
 ```bash
 docker build \
-  --build-arg PY_VER=3.10 \
+  --build-arg PY_VER=3.11 \
   --platform=linux/amd64 \
-  -t pyrecastdetour:py310-amd64 .
+  -t pyrecastdetour:py311-amd64 .
 ```
 
 ### Run and test
 
 ```bash
-docker run --rm -it pyrecastdetour:py310-amd64
+docker run --rm -it pyrecastdetour:py311-amd64
 # or run the test script
-docker run --rm -it pyrecastdetour:py310-amd64 python /app/tests/solo_demo.py
+docker run --rm -it pyrecastdetour:py311-amd64 python /app/tests/solo_demo.py
 ```
 
 Artifacts will be placed in `/app/dist` inside the container runtime (built in `/work/dist` during the build stage).
@@ -33,7 +33,7 @@ Copy the built `.so` out of the container and install it locally (adjust contain
 
 ```bash
 # Copy artifact to host
-cid=$(docker create pyrecastdetour:py310-amd64)
+cid=$(docker create pyrecastdetour:py311-amd64)
 docker cp "$cid:/app/dist/." ./dist
 docker rm "$cid"
 # Install system-wide (or place on your PYTHONPATH)
@@ -44,7 +44,7 @@ sudo cp dist/PyRecastDetour*.so /usr/local/lib/python3.10/site-packages/
 python3 -c "import PyRecastDetour as m; print(m, 'OK')"
 ```
 
-## Example usage (Python 3.10)
+## Example usage
 
 ```python
 import PyRecastDetour as navmod

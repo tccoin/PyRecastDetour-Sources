@@ -1,4 +1,4 @@
-cid=$(docker create pyrecastdetour:py310-amd64)
+cid=$(docker create pyrecastdetour:py311-amd64)
 docker cp "$cid:/app/dist/." ./dist
 docker rm "$cid"
 SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")

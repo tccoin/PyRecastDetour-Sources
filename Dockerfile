@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
 
-ARG PY_VER=3.10
+ARG PY_VER=3.11
 ARG TARGETPLATFORM=linux/amd64
 
 FROM python:${PY_VER}-slim-bullseye AS builder
